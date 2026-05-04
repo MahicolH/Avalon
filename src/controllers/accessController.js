@@ -1,6 +1,6 @@
 const AccessToken = require('../models/AccessToken');
 const PendingRequest = require('../models/PendingRequest');
-const User = require('../models/User'); // AGREGAR esta línea
+const User = require('../models/user'); // AGREGAR esta línea
 const urllib = require('urllib');
 const qrcode = require('qrcode');
 
