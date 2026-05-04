@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Consultar Estado - Acceso</title>
+    <script src="api-config.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #00594C; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 15px; padding-bottom: 80px; box-sizing: border-box; }
+        .container { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        .logo-box { display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 18px; height: 90px; overflow: visible; }
+        .logo-box img { height: 74px !important; width: auto !important; max-width: 220px; object-fit: contain; filter: drop-shadow(0 12px 28px rgba(0,0,0,0.25)); }
+
+        h1 { color: #00594C; font-size: 1.3rem; margin: 10px 0; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #f9f9f9; }
+        .btn { background: #00594C; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
+        .btn:hover { background: #004838; }
+
+        .navbar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { text-decoration: none; color: #888; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; font-weight: bold; }
+        .nav-item.active { color: #00594C; }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 2px; }
+
+        .status-box { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; }
+        .status-pending { background: #fff3cd; border: 1px solid #ffc107; color: #856404; }
+        .status-approved { background: #d4edda; border: 1px solid #28a745; color: #155724; }
+        .status-denied { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .status-used { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+
+        .token-display { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 10px; font-family: monospace; word-break: break-all; }
+        .error-box { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 10px; margin-top: 20px; display: none; }
+
+        .info-line { margin: 8px 0; text-align: left; font-size: 0.95rem; }
+        strong { color: #00594C; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-box">
+            <img src="img/logo-prologis.png">
+            <img src="img/logo-martel.png">
+        </div>
+        <h1>Consultar Estado</h1>
+        <p style="color: #666; font-size: 0.9rem;">Ingresa tu código de solicitud o token para ver el estado</p>
+        
+        <div>
+            <label style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px; color: #00594C;">Código de Solicitud (REQ-xxxxxx)</label>
+            <input type="text" id="requestId" placeholder="ej: REQ-abc123" style="margin-bottom: 10px;">
+            <button class="btn" onclick="consultarSolicitud()">CONSULTAR SOLICITUD</button>
+        </div>
+
+        <div style="margin: 20px 0; text-align: center; color: #999;">— O —</div>
+
+        <div>
+            <label style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px; color: #00594C;">Token de Acceso</label>
+            <input type="text" id="tokenInput" placeholder="Tu token de 8 dígitos" style="margin-bottom: 10px;">
+            <button class="btn" onclick="consultarToken()" style="background: #1976D2;">CONSULTAR TOKEN</button>
+        </div>
+
+        <div id="statusBox" class="status-box">
+            <div id="statusContent"></div>
+        </div>
+
+        <div id="errorBox" class="error-box">
+            <div id="errorContent"></div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-item"> <span class="nav-icon">🏠</span>Inicio </a>
+        <a href="visitor_request.html" class="nav-item"> <span class="nav-icon">📝</span>Registro </a>
+        <a href="check_status.html" class="nav-item active"> <span class="nav-icon">✓</span>Estado </a>
+    </nav>
+
+    <script>
+        function consultarSolicitud() {
+            const requestId = document.getElementById('requestId').value.trim();
+            if (!requestId) {
+                mostrarError('Por favor ingresa tu código de solicitud');
+                return;
+            }
+
+            fetch(apiUrl(`/api/access/request-status/${requestId}`))
+                .then(r => r.json())
+                .then(d => {
+                    ocultarError();
+                    if (d.found) {
+                        const statusText = d.status === 'pending' ? 'Pendiente de Aprobación' : d.status;
+                        const tipoAcceso = d.accessType === 'frequent' ? '🔁 Acceso Frecuente (múltiples entradas)' : '⏱️ Acceso Temporal (una entrada/salida)';
+                        document.getElementById('statusBox').className = 'status-box status-' + d.status;
+                        document.getElementById('statusContent').innerHTML = `
+                            <div style="font-weight: bold; margin-bottom: 10px;">Estado: ${statusText}</div>
+                            <div class="info-line"><strong>Nombre:</strong> ${d.visitorName}</div>
+                            <div class="info-line"><strong>Destino:</strong> ${d.destination}</div>
+                            <div class="info-line"><strong>Anfitrión:</strong> ${d.hostName}</div>
+                            <div class="info-line"><strong>Tipo:</strong> ${tipoAcceso}</div>
+                            <div class="info-line"><strong>Solicitado:</strong> ${new Date(d.createdAt).toLocaleString()}</div>
+                            ${d.status === 'pending' ? '<div style="margin-top: 10px; font-style: italic; color: #666;">Aguarda la confirmación del anfitrión...</div>' : ''}
+                        `;
+                        document.getElementById('statusBox').style.display = 'block';
+                    } else {
+                        mostrarError('Solicitud no encontrada. Es posible que ya haya sido procesada. Verifica tu token de acceso.');
+                    }
+                })
+                .catch(e => mostrarError('Error al consultar. Intenta de nuevo.'));
+        }
+
+        function consultarToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (!token) {
+                mostrarError('Por favor ingresa tu token de acceso');
+                return;
+            }
+
+            fetch(apiUrl(`/api/access/token-info/${token}`))
+                .then(r => r.json())
+                .then(d => {
+                    ocultarError();
+                    if (d.error) {
+                        mostrarError(d.error);
+                    } else {
+                        const statusEmoji = d.status === 'approved' ? '✅' : d.status === 'used' ? '🔒' : '⏳';
+                        const tipoAcceso = d.accessType === 'frequent' ? '🔁 Acceso Frecuente' : '⏱️ Acceso Temporal';
+                        document.getElementById('statusBox').className = 'status-box status-' + d.status;
+                        let content = `
+                            <div style="font-weight: bold; margin-bottom: 10px;">${statusEmoji} ${d.status === 'approved' ? 'APROBADO' : d.status === 'used' ? 'UTILIZADO' : 'PENDIENTE'}</div>
+                            <div class="info-line"><strong>Visitante:</strong> ${d.visitorName}</div>
+                            <div class="info-line"><strong>Destino:</strong> ${d.destination}</div>
+                            <div class="info-line"><strong>Token:</strong></div>
+                            <div class="token-display">${token}</div>
+                            <div class="info-line" style="margin-top: 10px;"><strong>Tipo:</strong> ${tipoAcceso}</div>
+                        `;
+                        
+                        if (d.accessType === 'frequent') {
+                            content += `
+                                <div class="info-line"><strong>Usos:</strong> ${d.usageCount} de ${d.maxUses}</div>
+                                <div class="info-line"><strong>Usos Restantes:</strong> ${d.remainingUses}</div>
+                            `;
+                        }
+                        
+                        content += `<div class="info-line" style="margin-top: 10px; font-size: 0.85rem; color: #666;"><strong>Creado:</strong> ${new Date(d.createdAt).toLocaleString()}</div>`;
+                        
+                        if (d.usedAt) {
+                            content += `<div class="info-line" style="font-size: 0.85rem; color: #666;"><strong>Utilizado:</strong> ${new Date(d.usedAt).toLocaleString()}</div>`;
+                        }
+
+                        document.getElementById('statusContent').innerHTML = content;
+                        document.getElementById('statusBox').style.display = 'block';
+                    }
+                })
+                .catch(e => mostrarError('Error al consultar token. Intenta de nuevo.'));
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById('errorContent').textContent = '⚠️ ' + mensaje;
+            document.getElementById('errorBox').style.display = 'block';
+            document.getElementById('statusBox').style.display = 'none';
+        }
+
+        function ocultarError() {
+            document.getElementById('errorBox').style.display = 'none';
+        }
+
+        // Permitir enter en inputs
+        document.getElementById('requestId').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') consultarSolicitud();
+        });
+        document.getElementById('tokenInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') consultarToken();
+        });
+    </script>
+</body>
+</html>

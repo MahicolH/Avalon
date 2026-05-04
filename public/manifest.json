@@ -1,0 +1,22 @@
+{
+  "short_name": "Avalon",
+  "name": "Avalon - Sistema de Acceso",
+  "icons": [
+    {
+      "src": "img/nuevo-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "img/nuevo-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#00594C",
+  "background_color": "#ffffff"
+}

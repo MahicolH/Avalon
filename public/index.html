@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Avalon - Inicio</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Avalon">
+    <link rel="apple-touch-icon" href="img/nuevo-logo.png">
+    <script src="api-config.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #111;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Video de fondo */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            z-index: -2;
+            object-fit: cover;
+        }
+
+        /* Overlay oscuro/verde */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 89, 76, 0.68);
+            z-index: -1;
+        }
+
+        /* Tarjeta principal - MÁS ANCHA */
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 35px 30px 32px;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 45px -12px rgba(0,0,0,0.35),
+                0 8px 20px -5px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 520px;  /* 🔥 MÁS ANCHA para los logos */
+            position: relative;
+            animation: float 7s ease-in-out infinite;
+            transition: all 0.4s ease;
+            z-index: 1;
+        }
+        
+        .welcome-card:hover {
+            transform: translateY(-10px) scale(1.01);
+            box-shadow: 
+                0 35px 70px -20px rgba(0,0,0,0.45),
+                0 12px 30px -8px rgba(0,0,0,0.3);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-15px); }
+        }
+
+        /* Logos - MÁS GRANDES */
+        .logo-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 28px;
+            padding: 0 10px;
+        }
+
+        .logo-header img {
+            height: 75px;  /* 🔥 MÁS GRANDES */
+            width: auto;
+            max-width: 48%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 16px rgba(0,89,76,0.3));
+            transition: transform 0.35s ease;
+        }
+
+        .logo-header img:hover {
+            transform: scale(1.08);
+        }
+
+        h1 {
+            color: #00443a;
+            font-size: 1.75rem;
+            margin: 0 0 28px 0;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        /* Botones */
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            margin: 12px 0;
+            border-radius: 14px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.28s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            border: 2px solid transparent;
+        }
+
+        .menu-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 35px rgba(0,0,0,0.25);
+        }
+
+        .btn-visitor {
+            background: #f8faf9;
+            color: #00594C;
+            border-color: #00594C;
+        }
+
+        .btn-visitor:hover {
+            background: #00594C;
+            color: white;
+        }
+
+        .btn-resident {
+            background: #00594C;
+            color: white;
+            border-color: #00443a;
+        }
+
+        .btn-resident:hover {
+            background: #00443a;
+            box-shadow: 0 18px 40px rgba(0,89,76,0.4);
+        }
+
+        /* Modal general */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 36px 28px;
+            border-radius: 20px;
+            width: 450px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        .modal-content h3 {
+            color: #00594C;
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 1.6rem;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        input[type="password"],
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #00594C;
+            box-shadow: 0 0 0 2px rgba(0,89,76,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .status-message.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .status-message.success {
+            background: #efe;
+            color: #2a7;
+            border: 1px solid #cfc;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: #00594C;
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-decoration: underline;
+            padding: 8px;
+            margin-top: 10px;
+            display: block;
+            width: 100%;
+        }
+
+        .link-button:hover {
+            color: #003d33;
+        }
+
+        .cancel-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-btn:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .welcome-card { 
+                padding: 28px 20px; 
+                max-width: 95%;
+            }
+            .logo-header { 
+                gap: 15px;
+                flex-direction: column; /* Logos en vertical en móvil */
+            }
+            .logo-header img { 
+                height: 60px;
+                max-width: 80%;
+            }
+            h1 { font-size: 1.5rem; }
+            .menu-btn { padding: 15px; font-size: 1.05rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .modal-content { padding: 24px 20px; width: 95%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Video de fondo -->
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="VIDEO.mp4" type="video/mp4">
+        Tu navegador no soporta videos HTML5.
+    </video>
+
+    <div class="welcome-card">
+        <div class="logo-header">
+            <img src="img/logo-prologis.png" alt="Prologis">
+            <img src="img/logo-martel.png" alt="Martel">
+        </div>
+        
+        <h1>Control de Acceso</h1>
+        
+        <button class="menu-btn btn-visitor" onclick="window.location.href='visitor_request.html'">
+            REGISTRO VISITANTE
+        </button>
+        <button class="menu-btn btn-resident" onclick="mostrarLogin()">
+            ACCESO RESIDENTE
+        </button>
+        <button class="menu-btn" style="background:#1976D2; color:white; border-color:#1565C0;" onclick="window.location.href='check_status.html'">
+            CONSULTAR ESTADO
+        </button>
+    </div>
+
+    <!-- MODAL DE LOGIN -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <h3>Iniciar Sesión</h3>
+            
+            <div class="form-group">
+                <label>Tipo de Usuario:</label>
+                <select id="userType">
+                    <option value="resident">Residente</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Usuario:</label>
+                <input type="text" id="username" placeholder="Ingresa tu usuario">
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="password" placeholder="Contraseña">
+            </div>
+
+            <div id="loginStatus" class="status-message"></div>
+
+            <button class="menu-btn btn-resident" onclick="loginUsuario()" style="margin-bottom:10px;">
+                INICIAR SESIÓN
+            </button>
+            
+            <button class="link-button" onclick="mostrarRegistro()">
+                ¿No tienes cuenta? Regístrate aquí
+            </button>
+            
+            <button class="cancel-btn" onclick="cerrarLogin()">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE REGISTRO -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <h3>Crear Nueva Cuenta</h3>
+            
+            <div class="form-group">
+                <label>Tipo de Usuario:</label>
+                <select id="regUserType">
+                    <option value="">Selecciona un tipo</option>
+                    <option value="resident">Residente</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre:</label>
+                    <input type="text" id="regNombre" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label>Apellido:</label>
+                    <input type="text" id="regApellido" placeholder="Tu apellido">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nº Bodega:</label>
+                    <input type="text" id="regBodega" placeholder="Ej: B-101">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono:</label>
+                    <input type="tel" id="regTelefono" placeholder="+57 300 123 4567">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Correo Electrónico:</label>
+                <input type="email" id="regEmail" placeholder="ejemplo@correo.com">
+            </div>
+
+            <div class="form-group">
+                <label>Usuario:</label>
+                <input type="text" id="regUsuario" placeholder="Nombre de usuario">
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" minlength="8">
+            </div>
+
+            <div class="form-group">
+                <label>Confirmar Contraseña:</label>
+                <input type="password" id="regConfirmPassword" placeholder="Repite tu contraseña">
+            </div>
+
+            <div id="registerStatus" class="status-message"></div>
+
+            <button class="menu-btn btn-resident" onclick="registrarUsuario()" style="margin-bottom:10px;">
+                CREAR CUENTA
+            </button>
+            
+            <button class="link-button" onclick="volverALogin()">
+                ¿Ya tienes cuenta? Inicia sesión
+            </button>
+            
+            <button class="cancel-btn" onclick="cerrarRegistro()">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ========== FUNCIONES DE LOGIN ==========
+        function mostrarLogin() { 
+            cerrarRegistro();
+            document.getElementById('password-modal').style.display = 'flex'; 
+            setTimeout(() => {
+                document.getElementById('username').focus();
+            }, 100);
+            limpiarFormularioLogin();
+        }
+        
+        function cerrarLogin() { 
+            document.getElementById('password-modal').style.display = 'none'; 
+            limpiarFormularioLogin();
+        }
+
+        function limpiarFormularioLogin() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('userType').value = 'resident';
+            mostrarMensaje('loginStatus', '', 'hide');
+        }
+
+        async function loginUsuario() {
+            const userType = document.getElementById('userType').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username) {
+                mostrarMensaje('loginStatus', '⚠️ Por favor ingresa el usuario', 'error');
+                return;
+            }
+            if (!password) {
+                mostrarMensaje('loginStatus', '⚠️ Por favor ingresa la contraseña', 'error');
+                return;
+            }
+
+            mostrarMensaje('loginStatus', 'Validando...', 'info');
+
+            try {
+                const res = await fetch(apiUrl('/api/auth/login'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username: username, 
+                        password: password,
+                        role: userType === 'admin' ? 'ADMIN' : 'RESIDENT'
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userType', userType);
+                    localStorage.setItem('username', username);
+                    
+                    mostrarMensaje('loginStatus', '✅ Acceso concedido...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'resident_generator.html';
+                    }, 500);
+                } else {
+                    mostrarMensaje('loginStatus', data.error || '❌ Usuario o contraseña incorrectos', 'error');
+                    document.getElementById('password').value = '';
+                }
+            } catch (e) {
+                mostrarMensaje('loginStatus', '❌ Error de conexión con el servidor', 'error');
+                console.error(e);
+            }
+        }
+
+        // ========== FUNCIONES DE REGISTRO ==========
+        function mostrarRegistro() {
+            cerrarLogin();
+            document.getElementById('register-modal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('regUserType').focus();
+            }, 100);
+            limpiarFormularioRegistro();
+        }
+
+        function cerrarRegistro() {
+            document.getElementById('register-modal').style.display = 'none';
+            limpiarFormularioRegistro();
+        }
+
+        function volverALogin() {
+            cerrarRegistro();
+            mostrarLogin();
+        }
+
+        function limpiarFormularioRegistro() {
+            document.getElementById('regUserType').value = '';
+            document.getElementById('regNombre').value = '';
+            document.getElementById('regApellido').value = '';
+            document.getElementById('regBodega').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regTelefono').value = '';
+            document.getElementById('regUsuario').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirmPassword').value = '';
+            mostrarMensaje('registerStatus', '', 'hide');
+        }
+
+        async function registrarUsuario() {
+            const userType = document.getElementById('regUserType').value;
+            const nombre = document.getElementById('regNombre').value.trim();
+            const apellido = document.getElementById('regApellido').value.trim();
+            const bodega = document.getElementById('regBodega').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const telefono = document.getElementById('regTelefono').value.trim();
+            const usuario = document.getElementById('regUsuario').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+            // Validaciones
+            if (!userType) {
+                mostrarMensaje('registerStatus', '⚠️ Selecciona el tipo de usuario', 'error');
+                return;
+            }
+            if (!nombre || !apellido) {
+                mostrarMensaje('registerStatus', '⚠️ Ingresa nombre y apellido', 'error');
+                return;
+            }
+            if (!bodega) {
+                mostrarMensaje('registerStatus', '⚠️ Ingresa el número de bodega', 'error');
+                return;
+            }
+            if (!email) {
+                mostrarMensaje('registerStatus', '⚠️ Ingresa un correo electrónico', 'error');
+                return;
+            }
+            if (!telefono) {
+                mostrarMensaje('registerStatus', '⚠️ Ingresa un teléfono', 'error');
+                return;
+            }
+            if (!usuario) {
+                mostrarMensaje('registerStatus', '⚠️ Ingresa un nombre de usuario', 'error');
+                return;
+            }
+            if (password.length < 8) {
+                mostrarMensaje('registerStatus', '⚠️ La contraseña debe tener al menos 8 caracteres', 'error');
+                return;
+            }
+            if (password !== confirmPassword) {
+                mostrarMensaje('registerStatus', '⚠️ Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            mostrarMensaje('registerStatus', 'Creando cuenta...', 'info');
+
+            const datos = {
+                userType: userType,
+                nombre: nombre,
+                apellido: apellido,
+                bodega: bodega,
+                email: email,
+                telefono: telefono,
+                username: usuario,
+                password: password,
+                role: userType === 'admin' ? 'ADMIN' : 'RESIDENT'
+            };
+
+            try {
+                const res = await fetch(apiUrl('/api/auth/register'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    mostrarMensaje('registerStatus', '✅ ¡Cuenta creada exitosamente! Redirigiendo...', 'success');
+                    
+                    setTimeout(() => {
+                        volverALogin();
+                        mostrarMensaje('loginStatus', '✅ Cuenta creada. Ahora puedes iniciar sesión', 'success');
+                    }, 2000);
+                } else {
+                    mostrarMensaje('registerStatus', data.error || '❌ Error al crear la cuenta', 'error');
+                }
+            } catch (e) {
+                mostrarMensaje('registerStatus', '❌ Error de conexión con el servidor', 'error');
+                console.error(e);
+            }
+        }
+
+        // ========== FUNCIÓN AUXILIAR PARA MENSAJES ==========
+        function mostrarMensaje(elementId, texto, tipo) {
+            const elemento = document.getElementById(elementId);
+            
+            if (tipo === 'hide') {
+                elemento.style.display = 'none';
+                elemento.textContent = '';
+                elemento.className = 'status-message';
+                return;
+            }
+            
+            elemento.textContent = texto;
+            elemento.className = `status-message ${tipo}`;
+            elemento.style.display = 'block';
+        }
+
+        // Validación visual de contraseñas coincidentes
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmPassInput = document.getElementById('regConfirmPassword');
+            if (confirmPassInput) {
+                confirmPassInput.addEventListener('input', function() {
+                    const password = document.getElementById('regPassword').value;
+                    const confirmPassword = this.value;
+
+                    if (confirmPassword && password !== confirmPassword) {
+                        this.style.borderColor = '#c33';
+                    } else {
+                        this.style.borderColor = '#ccc';
+                    }
+                });
+            }
+        });
+
+        // Permitir Enter para enviar formularios
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('password-modal').style.display === 'flex') {
+                    loginUsuario();
+                } else if (document.getElementById('register-modal').style.display === 'flex') {
+                    registrarUsuario();
+                }
+            }
+        });
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>

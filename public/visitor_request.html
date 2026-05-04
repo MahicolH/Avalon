@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Avalon - Registro</title>
+    <script src="api-config.js"></script>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #00594C; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 15px; padding-bottom: 80px; box-sizing: border-box; }
+        .container { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        /* LOGOS REPARADOS */
+        .logo-box { display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 18px; height: 90px; overflow: visible; }
+        .logo-box img { height: 74px !important; width: auto !important; max-width: 220px; object-fit: contain; filter: drop-shadow(0 12px 28px rgba(0,0,0,0.25)); }
+
+        h1 { color: #00594C; font-size: 1.3rem; margin: 10px 0; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #f9f9f9; }
+        .row { display: flex; gap: 10px; }
+        .btn { background: #00594C; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
+        
+        /* BARRA DE NAVEGACIÓN */
+        .navbar { display: none; }
+
+        #status { margin-top: 10px; padding: 10px; border-radius: 10px; display: none; background: #fff3cd; color: #856404; font-size: 0.9rem; }
+        #approvedArea { display: none; text-align: center; background: #d4edda; border-radius: 15px; padding: 20px; margin-top: 15px; }
+        #approvedArea img { width: 200px; height: 200px; object-fit: contain; margin-bottom: 10px; border-radius: 10px; }
+        #approvedToken { font-size: 1.2rem; font-weight: bold; color: #00594C; margin-top: 10px; font-family: monospace; }
+        .access-type-select { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; font-size: 16px; }
+        .success-msg { color: #155724; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-box">
+            <img src="img/logo-prologis.png">
+            <img src="img/logo-martel.png">
+        </div>
+        <h1>Registro de Entrada</h1>
+        
+        <div style="background: #f0f0f0; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; color: #555;">
+            <strong>Bienvenido.</strong> Selecciona el tipo de entrada que darás:
+        </div>
+
+        <div class="row" style="margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label style="font-weight: bold; color: #00594C; font-size: 0.9rem;">Tipo de visita</label>
+                <div style="margin-top: 8px; display: flex; gap: 10px;">
+                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="visitType" value="cargo" checked style="cursor: pointer;">
+                        <span>Carga</span>
+                    </label>
+                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="visitType" value="visita" style="cursor: pointer;">
+                        <span>Visita</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-bottom: 12px;">
+            <div style="flex: 1;">
+                <label style="font-weight: bold; color: #00594C; font-size: 0.9rem;">Tipo de acceso</label>
+                <select id="vAccess" class="access-type-select">
+                    <option value="single">Temporal (10 hrs)</option>
+                    <option value="frequent">Frecuente (Múltiples entradas)</option>
+                </select>
+            </div>
+        </div>
+
+        <input type="text" id="vEmp" placeholder="Empresa / Proveedor" style="margin-bottom: 12px;">
+        <input type="text" id="vName" placeholder="Nombre de visitante" style="margin-bottom: 12px;">
+        <input type="tel" id="vPhone" placeholder="Teléfono de contacto" style="margin-bottom: 12px;">
+        
+        <div class="row" style="margin-bottom: 12px;">
+            <input type="text" id="vHost" placeholder="Anfitrión" style="margin-bottom: 0;">
+            <input type="text" id="vDest" placeholder="Bodega / Destino" style="margin-bottom: 0;">
+        </div>
+
+        <label style="font-weight: bold; color: #00594C; font-size: 0.9rem; display: block; margin: 15px 0 8px;">Identificación (IED/Licencia de manejo)</label>
+        <div style="border: 2px dashed #ccc; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; background: #f9f9f9; margin-bottom: 12px;" onclick="document.getElementById('idFile').click();">
+            <div style="font-size: 1.8rem; margin-bottom: 5px;">📤</div>
+            <div style="font-weight: bold;">Subir archivos</div>
+            <div style="font-size: 0.8rem; color: #999;">arrastra tus imágenes, o Haz click para seleccionar</div>
+        </div>
+        <input type="file" id="idFile" style="display: none;" accept="image/*">
+        <span id="idFileName" style="font-size: 0.85rem; color: #666;"></span>
+
+        <div class="row" style="margin-bottom: 12px;">
+            <input type="text" id="vPla" placeholder="Número de placas" style="margin-bottom: 0;">
+            <input type="text" id="vVeh" placeholder="Vehículo (modelo)" style="margin-bottom: 0;">
+        </div>
+
+        <label style="font-weight: bold; color: #00594C; font-size: 0.9rem; display: block; margin: 15px 0 8px;">Vehículo (Fotos)</label>
+        <div style="border: 2px dashed #ccc; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; background: #f9f9f9; margin-bottom: 12px;" onclick="document.getElementById('vehicleFile').click();">
+            <div style="font-size: 1.8rem; margin-bottom: 5px;">📤</div>
+            <div style="font-weight: bold;">Subir archivos</div>
+            <div style="font-size: 0.8rem; color: #999;">arrastra tus imágenes, o Haz click para seleccionar</div>
+        </div>
+        <input type="file" id="vehicleFile" style="display: none;" accept="image/*" multiple>
+        <span id="vehicleFileName" style="font-size: 0.85rem; color: #666;"></span>
+
+        <button class="btn" onclick="enviar()">GENERAR PASE</button>
+        <div id="status">Esperando aprobación...</div>
+        <div id="approvedArea">
+            <div class="success-msg">✅ ¡ACCESO APROBADO!</div>
+            <p>Presenta este código QR en la entrada:</p>
+            <img id="approvedQR" alt="QR Code">
+            <div id="approvedToken"></div>
+            <p style="font-size:0.85rem; color:#555; margin-top:15px;">Tu token de acceso ha sido registrado en el sistema</p>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-item"> <span class="nav-icon">🏠</span>Inicio </a>
+        <a href="visitor_request.html" class="nav-item active"> <span class="nav-icon">📝</span>Registro </a>
+        <a href="resident_generator.html" class="nav-item"> <span class="nav-icon">📊</span>Panel </a>
+    </nav>
+
+    <script>
+        const socket = window.io ? io(window.APP_CONFIG.SOCKET_BASE || undefined) : { emit: function () {}, on: function () {} };
+        const rid = 'REQ-' + Math.random().toString(36).substr(2, 9);
+
+        // Manejar selección de archivos
+        document.getElementById('idFile').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                document.getElementById('idFileName').textContent = `✓ ${e.target.files[0].name}`;
+            }
+        });
+
+        document.getElementById('vehicleFile').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                document.getElementById('vehicleFileName').textContent = `✓ ${e.target.files.length} archivo(s) seleccionado(s)`;
+            }
+        });
+
+        async function enviar() {
+            const data = {
+                requestId: rid,
+                visitorName: document.getElementById('vName').value,
+                empresa: document.getElementById('vEmp').value,
+                hostName: document.getElementById('vHost').value,
+                destination: document.getElementById('vDest').value,
+                vehiculo: document.getElementById('vVeh').value,
+                placas: document.getElementById('vPla').value,
+                accessType: document.getElementById('vAccess').value,
+                visitType: document.querySelector('input[name="visitType"]:checked').value,
+                phone: document.getElementById('vPhone').value
+            };
+
+            if (!data.visitorName || !data.destination) return alert('Faltan datos requeridos');
+
+            document.getElementById('status').style.display = 'block';
+            document.getElementById('status').textContent = 'Enviando solicitud...';
+
+            socket.emit('join-request', rid);
+
+            try {
+                const res = await fetch(apiUrl('/api/access/request'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    document.getElementById('status').style.display = 'none';
+                    alert(err.error || 'Error al enviar solicitud');
+                    return;
+                }
+
+                const created = await res.json();
+                document.getElementById('status').textContent = `✓ Solicitud enviada (ID: ${rid}). Esperando aprobación...`;
+                document.querySelector('.btn').disabled = true;
+            } catch (e) {
+                document.getElementById('status').style.display = 'none';
+                alert('Error de conexión. Intenta de nuevo.');
+            }
+        }
+
+        socket.on('access-response', (d) => {
+            if (d.status === 'approved') {
+                // Abrir página detallada del QR
+                const qrParams = new URLSearchParams({
+                    token: d.token,
+                    visitorName: document.getElementById('vName').value,
+                    empresa: document.getElementById('vEmp').value,
+                    planta: document.getElementById('vDest').value,
+                    accessType: document.getElementById('vAccess').value,
+                    generatedBy: document.getElementById('vHost').value,
+                    qr: d.qrCodeImage || ''
+                });
+                window.open(`qr_display.html?${qrParams.toString()}`, '_blank');
+                
+                // Mostrar confirmación en página actual
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('approvedArea').style.display = 'block';
+                document.getElementById('approvedQR').src = d.qrCodeImage || (`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${d.token}&choe=UTF-8`);
+                document.getElementById('approvedToken').innerText = d.token;
+            } else {
+                alert('❌ Solicitud DENEGADA');
+                document.querySelector('.btn').disabled = false;
+                document.getElementById('status').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QR - Pase de Acceso</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #00594C 0%, #004838 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px;
+        }
+        
+        .qr-container { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 30px; 
+            max-width: 500px; 
+            width: 100%; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .qr-header {
+            background: linear-gradient(135deg, #00594C 0%, #004838 100%);
+            color: white;
+            padding: 20px;
+            margin: -30px -30px 20px -30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+
+        .qr-header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        .qr-header p { font-size: 0.9rem; opacity: 0.9; }
+
+        .qr-code { 
+            text-align: center; 
+            margin: 30px 0;
+        }
+
+        .qr-code img { 
+            max-width: 300px; 
+            width: 100%; 
+            height: auto; 
+            border: 3px solid #00594C;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .qr-info { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+        }
+
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin: 10px 0;
+            font-size: 0.95rem;
+        }
+
+        .info-row strong { 
+            color: #00594C; 
+            min-width: 120px;
+        }
+
+        .info-row span { 
+            color: #333;
+            text-align: right;
+            flex: 1;
+        }
+
+        .token-display {
+            background: white;
+            border: 2px solid #00594C;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00594C;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+
+        .vigencia {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .vigencia strong { color: #5a4701; }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #00594C;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #004838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,89,76,0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+            transform: translateY(-2px);
+        }
+
+        .divider {
+            border-top: 1px solid #eee;
+            margin: 20px 0;
+        }
+
+        .companies-logo {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .companies-logo img {
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #00594C;
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .qr-container { padding: 20px; }
+            .qr-header { margin: -20px -20px 15px -20px; padding: 15px; }
+            .btn { padding: 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.history.back()">←</button>
+
+    <div class="qr-container">
+        <div class="companies-logo">
+            <img src="img/logo-prologis.png" alt="Prologis">
+            <img src="img/logo-martel.png" alt="Martel">
+        </div>
+
+        <div class="qr-header">
+            <h1>Pase de Acceso</h1>
+            <p id="plantaName">--</p>
+        </div>
+
+        <div class="qr-code">
+            <canvas id="qrCanvas" style="display:none;"></canvas>
+            <img id="qrImage" src="" alt="QR Code" style="display:none;">
+            <div id="loadingQR" style="padding: 30px; text-align: center; color: #999;">Generando QR...</div>
+        </div>
+
+        <div class="token-display" id="tokenDisplay">--</div>
+
+        <div class="qr-info">
+            <div class="info-row">
+                <strong>Tipo de visita:</strong>
+                <span id="accessType">--</span>
+            </div>
+            <div class="info-row">
+                <strong>Empresa:</strong>
+                <span id="empresa">--</span>
+            </div>
+            <div class="info-row">
+                <strong>Visitante:</strong>
+                <span id="visitorName">--</span>
+            </div>
+            <div class="info-row">
+                <strong>Generado por:</strong>
+                <span id="generatedBy">--</span>
+            </div>
+        </div>
+
+        <div class="vigencia">
+            <strong>⏰ Vigencia:</strong> <span id="vigenciaText">Este QR tiene una vigencia de 10 horas</span>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="descargarQR()">⬇️ Descargar QR</button>
+            <button class="btn btn-secondary" onclick="compartirQR()">📤 Compartir</button>
+        </div>
+    </div>
+
+    <!-- Librería QRCode.js desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        // Obtener parámetros de la URL
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const visitorName = params.get('visitorName') || '--';
+        const empresa = params.get('empresa') || '--';
+        const planta = params.get('planta') || 'Acceso';
+        const accessType = params.get('accessType') || 'single';
+        const generatedBy = params.get('generatedBy') || 'Sistema';
+        
+        // Llenar datos
+        document.getElementById('plantaName').textContent = planta;
+        document.getElementById('tokenDisplay').textContent = token || '--';
+        document.getElementById('visitorName').textContent = visitorName;
+        document.getElementById('empresa').textContent = empresa;
+        document.getElementById('generatedBy').textContent = generatedBy;
+        document.getElementById('accessType').textContent = accessType === 'frequent' ? 'Frecuente (Múltiples) 🔁' : 'Temporal (10 hrs) ⏱️';
+
+        // CRÍTICO: Generar QR que solo contenga el número del token
+        if (token) {
+            try {
+                // Crear elemento temporal para el QR
+                const qrContainer = document.createElement('div');
+                qrContainer.id = 'qrcode-temp';
+                document.body.appendChild(qrContainer);
+                
+                // Generar QR con SOLO el número del token (compatible con Hikvision)
+                const qr = new QRCode(qrContainer, {
+                    text: token,  // SOLO EL NÚMERO, sin URL ni nada más
+                    width: 300,
+                    height: 300,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                
+                // Esperar a que se genere el QR
+                setTimeout(() => {
+                    const canvas = qrContainer.querySelector('canvas');
+                    if (canvas) {
+                        // Convertir canvas a imagen
+                        const qrDataURL = canvas.toDataURL('image/png');
+                        document.getElementById('qrImage').src = qrDataURL;
+                        document.getElementById('qrImage').style.display = 'block';
+                        document.getElementById('loadingQR').style.display = 'none';
+                        
+                        // Guardar en sessionStorage para uso posterior
+                        sessionStorage.setItem('qrCodeImage', qrDataURL);
+                    }
+                    
+                    // Limpiar elemento temporal
+                    qrContainer.remove();
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error generando QR:', error);
+                // Fallback a Google Charts (genera QR solo con el token)
+                const googleChartsURL = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(token)}&choe=UTF-8`;
+                document.getElementById('qrImage').src = googleChartsURL;
+                document.getElementById('qrImage').style.display = 'block';
+                document.getElementById('loadingQR').style.display = 'none';
+            }
+        }
+
+        function descargarQR() {
+            const qrImg = document.getElementById('qrImage');
+            if (!qrImg.src) return alert('QR no disponible');
+            
+            const link = document.createElement('a');
+            link.href = qrImg.src;
+            link.download = `pase-acceso-${token}.png`;
+            link.click();
+        }
+
+        function compartirQR() {
+            const text = `Pase de acceso\nVisitante: ${visitorName}\nEmpresa: ${empresa}\nToken: ${token}\nPlanta: ${planta}`;
+            
+            if (navigator.share) {
+                const qrImg = document.getElementById('qrImage');
+                
+                // Intentar compartir con la imagen del QR
+                fetch(qrImg.src)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], `pase-${token}.png`, { type: 'image/png' });
+                        navigator.share({
+                            title: 'Pase de Acceso',
+                            text: text,
+                            files: [file]
+                        });
+                    })
+                    .catch(() => {
+                        // Fallback: compartir solo texto
+                        navigator.share({
+                            title: 'Pase de Acceso',
+                            text: text
+                        });
+                    });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(text);
+                alert('✅ Información copiada al portapapeles');
+            } else {
+                alert(text);
+            }
+        }
+    </script>
+</body>
+</html>

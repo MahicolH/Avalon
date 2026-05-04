@@ -1,0 +1,2 @@
+# Netlify serves the real .html files in this folder.
+# API and Socket.IO requests must go to the Express backend configured in api-config.js.

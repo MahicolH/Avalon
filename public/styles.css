@@ -1,0 +1,64 @@
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+}
+
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    width: 90%;
+    max-width: 800px;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #1a1a1a;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #666;
+}
+
+td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #f7f7f7;
+    color: #333;
+}
+
+.acciones {
+    display: flex;
+    gap: 10px;
+}
+
+/* Botones con el estilo de tu última imagen */
+.btn-descargar, .btn-wa, .btn-cancel {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 15px;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.btn-descargar { background-color: #2ecc71; }
+.btn-wa { background-color: #25D366; }
+.btn-cancel { background-color: #ff4757; }
+
+.btn-descargar:hover, .btn-wa:hover, .btn-cancel:hover {
+    filter: brightness(0.9);
+}
