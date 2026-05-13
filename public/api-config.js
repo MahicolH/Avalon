@@ -1,5 +1,5 @@
 (function () {
-    var backendUrl = "";
+    var backendUrl = "https://avalon-ju7h.onrender.com";
     // For Netlify, set backendUrl to your deployed Express server, for example:
     // var backendUrl = "https://your-backend.onrender.com";
 

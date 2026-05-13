@@ -13,6 +13,9 @@ const AccessToken = require('./src/models/AccessToken');
 const authMiddleware = require('./src/middleware/auth');
 const cameraAuth = require('./src/middleware/cameraAuth');
 
+function redactMongoUri(uri) {
+    return uri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:********@');
+}
 const app = express();
 const corsOrigins = (process.env.CORS_ORIGIN || '*')
     .split(',')
@@ -30,6 +33,16 @@ const io = new Server(server, {
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/health', (req, res) => {
+    res.json({
+        ok: true,
+        mongoReadyState: mongoose.connection.readyState,
+        mongoConnected: mongoose.connection.readyState === 1,
+        uptime: process.uptime()
+    });
+});
+
 app.use('/api/access', accessRoutes);
 app.use('/api/auth', authRoutes);
 
@@ -102,15 +115,31 @@ app.post('/event-receiver', async (req, res) => {
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/martel_db';
 
-mongoose.connect(MONGO_URI).then(() => {
-    console.log('✅ MongoDB Conectado', MONGO_URI);
-    setInterval(async () => {
-        const limite = new Date(Date.now() - (8 * 60 * 60 * 1000));
-        const pases = await AccessToken.find({ status: 'approved', accessType: 'single', createdAt: { $lt: limite } });
-        for (const p of pases) await accessController.ejecutarBaja(p.token, 'Expirado (8h)');
-    }, 600000);
+mongoose.connection.on('connected', () => {
+    console.log('MongoDB conectado:', redactMongoUri(MONGO_URI));
 });
 
+mongoose.connection.on('disconnected', () => {
+    console.warn('MongoDB desconectado');
+});
+
+mongoose.connection.on('error', (error) => {
+    console.error('MongoDB error:', error.message);
+});
+
+mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 10000 }).then(() => {
+    setInterval(async () => {
+        try {
+            const limite = new Date(Date.now() - (8 * 60 * 60 * 1000));
+            const pases = await AccessToken.find({ status: 'approved', accessType: 'single', createdAt: { $lt: limite } });
+            for (const p of pases) await accessController.ejecutarBaja(p.token, 'Expirado (8h)');
+        } catch (error) {
+            console.error('Error expirando pases:', error.message);
+        }
+    }, 600000);
+}).catch((error) => {
+    console.error('MongoDB no pudo conectar:', error.message);
+});
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sistema Martel en puerto ${PORT}`));
 
