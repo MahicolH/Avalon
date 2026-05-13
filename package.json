@@ -1,49 +1,52 @@
 {
-  "name": "access-control",
-  "version": "1.0.0",
-  "main": "server.js",
-  "bin": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "test": "jest --runInBand",
-    "build": "pkg . -o park-acces-control.exe --targets win",
-    "web:sync": "copy-item public/* www -Recurse -Force",
-    "mobile:sync": "npx cap sync",
-    "mobile:build": "npm run web:sync && npx cap sync",
-    "mobile:open-android": "npx cap open android",
-    "mobile:open-ios": "npx cap open ios"
-  },
-  "pkg": {
-    "assets": [
-      "public/**/*",
-      ".env"
-    ],
-    "scripts": [
-      "src/**/*.js"
-    ]
-  },
-  "dependencies": {
-    "@capacitor/android": "^8.1.0",
-    "@capacitor/camera": "^8.0.1",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0",
-    "@capacitor/filesystem": "^8.1.2",
-    "@capacitor/ios": "^8.1.0",
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.22.1",
-    "express-validator": "^7.0.1",
-    "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.8.8",
-    "qrcode": "^1.5.4",
-    "socket.io": "^4.8.3",
-    "urllib": "^2.44.0",
-    "uuid": "^13.0.0"
-  },
-  "devDependencies": {
-    "jest": "^29.6.1",
-    "pkg": "^5.8.1",
-    "supertest": "^6.3.3"
-  }
+    "name":  "access-control",
+    "version":  "1.0.0",
+    "main":  "server.js",
+    "bin":  "server.js",
+    "scripts":  {
+                    "start":  "node server.js",
+                    "test":  "jest --runInBand",
+                    "build":  "pkg . -o park-acces-control.exe --targets win",
+                    "web:sync":  "copy-item public/* www -Recurse -Force",
+                    "mobile:sync":  "npx cap sync",
+                    "mobile:build":  "npm run web:sync \u0026\u0026 npx cap sync",
+                    "mobile:open-android":  "npx cap open android",
+                    "mobile:open-ios":  "npx cap open ios"
+                },
+    "pkg":  {
+                "assets":  [
+                               "public/**/*",
+                               ".env"
+                           ],
+                "scripts":  [
+                                "src/**/*.js"
+                            ]
+            },
+    "dependencies":  {
+                         "@capacitor/android":  "^8.1.0",
+                         "@capacitor/camera":  "^8.0.1",
+                         "@capacitor/cli":  "^8.1.0",
+                         "@capacitor/core":  "^8.1.0",
+                         "@capacitor/filesystem":  "^8.1.2",
+                         "@capacitor/ios":  "^8.1.0",
+                         "bcrypt":  "^6.0.0",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.3.1",
+                         "express":  "^4.22.1",
+                         "express-validator":  "^7.0.1",
+                         "jsonwebtoken":  "^9.0.0",
+                         "mongoose":  "^7.8.8",
+                         "qrcode":  "^1.5.4",
+                         "socket.io":  "^4.8.3",
+                         "urllib":  "^2.44.0",
+                         "uuid":  "^13.0.0"
+                     },
+    "devDependencies":  {
+                            "jest":  "^29.6.1",
+                            "pkg":  "^5.8.1",
+                            "supertest":  "^6.3.3"
+                        },
+    "engines":  {
+                    "node":  "20.x"
+                }
 }
