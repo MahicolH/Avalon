@@ -5,7 +5,7 @@
 const AccessToken = require('../models/AccessToken');
 const PendingRequest = require('../models/PendingRequest');
 const GatewayCommand = require('../models/GatewayCommand');
-const User = require('../models/User');
+const User = require('../models/user');
 const qrcode = require('qrcode');
 
 // ─── Función interna: encolar comando para el Gateway (se mantiene para LPR) ──
