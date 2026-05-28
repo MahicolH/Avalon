@@ -47,6 +47,8 @@ app.use(cors({
 // ──────────────────────────────────────────────────────────────
 
 app.use(express.json());
+app.use(express.text({ type: 'application/xml' }));
+app.use(express.text({ type: 'text/xml' }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
