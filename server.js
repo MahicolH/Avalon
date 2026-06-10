@@ -112,11 +112,28 @@ app.post('/event-qr', upload.any(), async (req, res) => {
 
         // ── Parsear multipart/form-data (Hikvision) ───────────────────────
         if (req.body && typeof req.body === 'object') {
+            // AccessControllerEvent viene como STRING, hay que parsearlo
+            let event = req.body.AccessControllerEvent;
+            if (event && typeof event === 'string') {
+                try { event = JSON.parse(event); } catch(e) {}
+            }
+
+            // Ignorar heartbeats
+            if (event?.eventType === 'heartBeat') {
+                console.log('💓 [QR] Heartbeat ignorado');
+                return res.status(200).json({ result: "ok" });
+            }
+
             token =
+                event?.cardNo ||
+                event?.QRCode ||
+                event?.qrCode ||
+                event?.employeeNoString ||
+                event?.authCardNo ||
+                req.body.cardNo ||
                 req.body.QRCode ||
                 req.body.qrCode ||
                 req.body.authCardNo ||
-                req.body.cardNo ||
                 req.body.cardNoString ||
                 req.body.employeeNoString ||
                 req.body.qrCodeData;
