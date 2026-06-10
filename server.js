@@ -97,8 +97,7 @@ app.post('/event-lpr', cameraAuth, async (req, res) => {
 // EVENTO QR HIKVISION
 // Soporta XML y JSON — Hikvision envía XML por defecto
 // ──────────────────────────────────────────────────────────────
-
-app.post('/event-qr', cameraAuth, async (req, res) => {
+app.post('/event-qr', async (req, res) => {
     try {
         let token = null;
 
@@ -146,7 +145,7 @@ app.post('/event-qr', cameraAuth, async (req, res) => {
 
         if (!token) {
             console.log('❌ [QR] Token no encontrado en el evento');
-            return res.status(200).json({ granted: false, reason: 'token not found' });
+            return res.status(200).json({ result: "failed" });
         }
 
         token = String(token).trim();
@@ -157,30 +156,19 @@ app.post('/event-qr', cameraAuth, async (req, res) => {
 
         if (!access) {
             console.log(`❌ [QR] Token inválido o ya usado: ${token}`);
-            return res.status(200).json({
-                granted: false,
-                token,
-                reason: 'QR inválido o ya utilizado'
-            });
+            return res.status(200).json({ result: "failed" });
         }
 
         console.log(`✅ [QR] Acceso concedido: ${access.visitorName} → ${access.destination}`);
-
         await accessController.ejecutarBaja(token, 'Acceso QR Confirmado');
 
-        return res.status(200).json({
-            granted: true,
-            token,
-            visitorName: access.visitorName,
-            destination: access.destination
-        });
+        return res.status(200).json({ result: "success", doorIndex: 1 });
 
     } catch (e) {
         console.error('❌ [QR] Error:', e.message);
-        return res.status(200).json({ granted: false, reason: 'error interno' });
+        return res.status(200).json({ result: "failed" });
     }
 });
-
 // ──────────────────────────────────────────────────────────────
 // EVENTO LEGACY
 // ──────────────────────────────────────────────────────────────
