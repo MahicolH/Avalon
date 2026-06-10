@@ -1,14 +1,70 @@
-// accessController.js — VERSION SIN GATEWAY (Hikvision → Backend directo)
-// El Hikvision llama directamente al endpoint /qr-event via HTTP Event
-// Ya NO se necesita la PC Gateway encendida para validar QR
-
 const AccessToken = require('../models/AccessToken');
 const PendingRequest = require('../models/PendingRequest');
 const GatewayCommand = require('../models/GatewayCommand');
 const User = require('../models/user');
 const qrcode = require('qrcode');
+const axios = require('axios');
+const https = require('https');
 
-// ─── Función interna: encolar comando para el Gateway (se mantiene para LPR) ──
+// ─── Hikvision ISAPI directa ──────────────────────────────────────────────────
+const HIK_IP   = process.env.HIK_IP   || '192.168.1.72';
+const HIK_USER = process.env.HIK_USER || 'admin';
+const HIK_PASS = process.env.HIK_PASS;
+const hikAgent = new https.Agent({ rejectUnauthorized: false });
+
+async function hikCreateUser(token, nombre) {
+    try {
+        const now = new Date();
+        const end = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const fmt = d => d.toISOString().slice(0, 19);
+
+        await axios.post(
+            `https://${HIK_IP}/ISAPI/AccessControl/UserInfo/Record`,
+            {
+                UserInfo: {
+                    employeeNo: token,
+                    name: (nombre || 'Visitante').substring(0, 31),
+                    userType: 'visitor',
+                    Valid: { enable: true, beginTime: fmt(now), endTime: fmt(end) },
+                    doorRight: '1',
+                    RightPlan: [{ doorNo: 1, planTemplateNo: '1' }]
+                }
+            },
+            { auth: { username: HIK_USER, password: HIK_PASS }, httpsAgent: hikAgent }
+        );
+
+        await axios.post(
+            `https://${HIK_IP}/ISAPI/AccessControl/CardInfo/Record`,
+            {
+                CardInfo: {
+                    employeeNo: token,
+                    cardNo: token,
+                    cardType: 'normalCard'
+                }
+            },
+            { auth: { username: HIK_USER, password: HIK_PASS }, httpsAgent: hikAgent }
+        );
+
+        console.log(`✅ [Hikvision] Usuario registrado: ${nombre} / token: ${token}`);
+    } catch (e) {
+        console.error('❌ [Hikvision] Error creando usuario:', e.response?.data || e.message);
+    }
+}
+
+async function hikDeleteUser(token) {
+    try {
+        await axios.put(
+            `https://${HIK_IP}/ISAPI/AccessControl/UserInfo/Delete`,
+            { UserInfoDelCond: { EmployeeNoList: [{ employeeNo: token }] } },
+            { auth: { username: HIK_USER, password: HIK_PASS }, httpsAgent: hikAgent }
+        );
+        console.log(`🗑️ [Hikvision] Usuario eliminado: ${token}`);
+    } catch (e) {
+        console.error('❌ [Hikvision] Error eliminando usuario:', e.response?.data || e.message);
+    }
+}
+
+// ─── Función interna: encolar comando (se mantiene para compatibilidad) ────────
 async function enqueueGateway(type, payload) {
     await GatewayCommand.create({ type, payload, status: 'pending' });
 }
@@ -25,13 +81,13 @@ exports.ejecutarBaja = async (token, motivo) => {
                 pase.status = 'used';
                 pase.usedAt = new Date();
                 pase.motivoCierre = 'Máximo de usos alcanzado';
-                await enqueueGateway('DELETE_USER', { employeeNo: token });
+                await hikDeleteUser(token);
             }
         } else {
             pase.status = 'used';
             pase.usedAt = new Date();
             pase.motivoCierre = motivo;
-            await enqueueGateway('DELETE_USER', { employeeNo: token });
+            await hikDeleteUser(token);
         }
 
         await pase.save();
@@ -42,14 +98,11 @@ exports.ejecutarBaja = async (token, motivo) => {
     }
 };
 
-// ─── NUEVO: Evento QR directo desde Hikvision (SIN Gateway, SIN PC) ──────────
-// El Hikvision llama a este endpoint cuando escanea un QR
-// Configurar en Hikvision: Red → HTTP Event → URL = /api/access/qr-event
+// ─── Evento QR directo desde Hikvision ───────────────────────────────────────
 exports.qrEvent = async (req, res) => {
     try {
         console.log('📷 [QR-Event] Body recibido:', JSON.stringify(req.body));
 
-        // Hikvision puede enviar el QR en distintos campos según el modelo/firmware
         const qrData =
             req.body?.AccessControllerEvent?.QRCode ||
             req.body?.QRCodeInfo?.strQRCode ||
@@ -59,50 +112,22 @@ exports.qrEvent = async (req, res) => {
             req.body?.employeeNoString;
 
         if (!qrData) {
-            console.log('❌ [QR-Event] No se recibió QR en el body');
-            return res.status(400).json({
-                ResultCode: 1,
-                Msg: 'QR no recibido'
-            });
+            return res.status(400).json({ ResultCode: 1, Msg: 'QR no recibido' });
         }
 
         const token = String(qrData).trim();
-        console.log('🔍 [QR-Event] Validando token:', token);
-
-        // Buscar en MongoDB
-        const pase = await AccessToken.findOne({
-            token,
-            status: 'approved'
-        });
+        const pase = await AccessToken.findOne({ token, status: 'approved' });
 
         if (!pase) {
-            console.log('❌ [QR-Event] Token inválido o ya usado:', token);
-            // Hikvision: ResultCode 1 = acceso denegado
-            return res.json({
-                ResultCode: 1,
-                Msg: 'Acceso denegado - QR inválido o expirado'
-            });
+            return res.json({ ResultCode: 1, Msg: 'Acceso denegado - QR inválido o expirado' });
         }
 
-        // QR válido → marcar como usado si es de un solo uso
         await exports.ejecutarBaja(token, 'Acceso QR confirmado');
-
-        console.log('✅ [QR-Event] Acceso concedido a:', pase.visitorName, '→', pase.destination);
-
-        // Hikvision: ResultCode 0 = acceso permitido → abre la puerta
-        return res.json({
-            ResultCode: 0,
-            Msg: 'Acceso concedido',
-            visitorName: pase.visitorName,
-            destination: pase.destination
-        });
+        return res.json({ ResultCode: 0, Msg: 'Acceso concedido' });
 
     } catch (e) {
         console.error('❌ [QR-Event] Error:', e.message);
-        res.status(500).json({
-            ResultCode: 1,
-            Msg: 'Error interno del servidor'
-        });
+        res.status(500).json({ ResultCode: 1, Msg: 'Error interno' });
     }
 };
 
@@ -119,10 +144,7 @@ exports.generateManual = async (req, res) => {
             phone
         });
 
-        await enqueueGateway('CREATE_USER', {
-            employeeNo: token,
-            name: visitorName.substring(0, 31)
-        });
+        await hikCreateUser(token, visitorName);
 
         const qr = await qrcode.toDataURL(token);
         res.json({
@@ -223,7 +245,7 @@ exports.getHistory = async (req, res) => {
     }
 };
 
-// ─── Check status (para app visitante) ───────────────────────────────────────
+// ─── Check status ─────────────────────────────────────────────────────────────
 exports.checkStatus = async (req, res) => {
     const access = await AccessToken.findOne({ token: req.params.token });
     if (!access) return res.status(404).send();
@@ -251,10 +273,7 @@ exports.approveRequest = async (req, res) => {
             status: 'approved'
         });
 
-        await enqueueGateway('CREATE_USER', {
-            employeeNo: token,
-            name: pending.visitorName.substring(0, 31)
-        });
+        await hikCreateUser(token, pending.visitorName);
 
         const qr = await qrcode.toDataURL(token);
         const requestId = pending.requestId;
@@ -300,10 +319,10 @@ exports.lprEvent = async (req, res) => {
                     pase.status = 'used';
                     pase.usedAt = new Date();
                     pase.motivoCierre = 'Máximo de usos alcanzado por LPR';
-                    await enqueueGateway('DELETE_USER', { employeeNo: pase.token });
+                    await hikDeleteUser(pase.token);
                 }
                 await pase.save();
-                return res.json({ granted: true, token: pase.token, accessType: 'frequent', usageCount: pase.usageCount });
+                return res.json({ granted: true, token: pase.token, accessType: 'frequent' });
             } else {
                 await exports.ejecutarBaja(pase.token, 'Acceso LPR Confirmado');
                 return res.json({ granted: true, token: pase.token, accessType: 'single' });
@@ -320,14 +339,7 @@ exports.checkRequestStatus = async (req, res) => {
     try {
         const pending = await PendingRequest.findOne({ requestId: req.params.requestId });
         if (!pending) return res.json({ found: false });
-        res.json({
-            found: true, status: 'pending',
-            visitorName: pending.visitorName,
-            destination: pending.destination,
-            hostName: pending.hostName,
-            accessType: pending.accessType,
-            createdAt: pending.createdAt
-        });
+        res.json({ found: true, status: 'pending', visitorName: pending.visitorName });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -338,23 +350,17 @@ exports.getTokenUsageInfo = async (req, res) => {
     try {
         const access = await AccessToken.findOne({ token: req.params.token });
         if (!access) return res.status(404).json({ error: 'Token no encontrado' });
-
-        const info = {
+        res.json({
             visitorName: access.visitorName,
             destination: access.destination,
             accessType: access.accessType,
             status: access.status,
             createdAt: access.createdAt,
-            usedAt: access.usedAt
-        };
-
-        if (access.accessType === 'frequent') {
-            info.usageCount = access.usageCount;
-            info.maxUses = access.frequentMaxUses;
-            info.remainingUses = Math.max(0, access.frequentMaxUses - access.usageCount);
-        }
-
-        res.json(info);
+            usedAt: access.usedAt,
+            usageCount: access.usageCount,
+            maxUses: access.frequentMaxUses,
+            remainingUses: Math.max(0, (access.frequentMaxUses || 0) - (access.usageCount || 0))
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -365,31 +371,23 @@ exports.provisionToken = async (req, res) => {
     try {
         const access = await AccessToken.findOne({ token: req.params.token });
         if (!access) return res.status(404).json({ error: 'Token no encontrado' });
-
-        await enqueueGateway('CREATE_USER', {
-            employeeNo: access.token,
-            name: (access.visitorName || 'Visitante').substring(0, 31)
-        });
-
+        await hikCreateUser(access.token, access.visitorName);
         return res.json({ success: true, token: access.token });
     } catch (e) {
         return res.status(500).json({ error: e.message });
     }
 };
 
-// ─── El Gateway consulta comandos pendientes ──────────────────────────────────
+// ─── Gateway (se mantiene por compatibilidad) ─────────────────────────────────
 exports.getCommands = async (req, res) => {
     try {
-        const commands = await GatewayCommand.find({ status: 'pending' })
-            .sort({ createdAt: 1 })
-            .limit(10);
+        const commands = await GatewayCommand.find({ status: 'pending' }).sort({ createdAt: 1 }).limit(10);
         res.json(commands);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 };
 
-// ─── El Gateway confirma que ejecutó un comando ───────────────────────────────
 exports.confirmCommand = async (req, res) => {
     try {
         const { id, success, error } = req.body;
