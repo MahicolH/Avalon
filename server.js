@@ -13,6 +13,8 @@ const accessController = require('./src/controllers/accessController');
 const AccessToken = require('./src/models/AccessToken');
 const authMiddleware = require('./src/middleware/auth');
 const cameraAuth = require('./src/middleware/cameraAuth');
+const multer = require('multer');
+const upload = multer();
 
 const app = express();
 const server = http.createServer(app);
@@ -94,21 +96,44 @@ app.post('/event-lpr', cameraAuth, async (req, res) => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// EVENTO QR HIKVISION
-// Soporta XML y JSON — Hikvision envía XML por defecto
 // ──────────────────────────────────────────────────────────────
-app.post('/event-qr', async (req, res) => {
+// EVENTO QR HIKVISION
+// Soporta multipart/form-data, XML y JSON
+// ──────────────────────────────────────────────────────────────
+const multer = require('multer');
+const upload = multer();
+
+app.post('/event-qr', upload.any(), async (req, res) => {
     try {
         let token = null;
 
         console.log('📥 [QR] Content-Type:', req.headers['content-type']);
-        console.log('📥 [QR] Body:', typeof req.body === 'string'
-            ? req.body.substring(0, 500)
-            : JSON.stringify(req.body)
-        );
+        console.log('📥 [QR] Body:', JSON.stringify(req.body));
+        console.log('📥 [QR] Files:', JSON.stringify(req.files?.map(f => ({ field: f.fieldname, value: f.buffer?.toString('utf8') }))));
 
-        // ── Parsear XML del Hikvision ─────────────────────────────────────
-        if (typeof req.body === 'string' && req.body.includes('<')) {
+        // ── Parsear multipart/form-data (Hikvision) ───────────────────────
+        if (req.body && typeof req.body === 'object') {
+            token =
+                req.body.QRCode ||
+                req.body.qrCode ||
+                req.body.authCardNo ||
+                req.body.cardNo ||
+                req.body.cardNoString ||
+                req.body.employeeNoString ||
+                req.body.qrCodeData;
+        }
+
+        // ── Si el token viene en un archivo del multipart ─────────────────
+        if (!token && req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                console.log('📎 [QR] File field:', file.fieldname, '→', file.buffer?.toString('utf8'));
+                token = file.buffer?.toString('utf8').trim();
+                if (token) break;
+            }
+        }
+
+        // ── Parsear XML ───────────────────────────────────────────────────
+        if (!token && typeof req.body === 'string' && req.body.includes('<')) {
             const xml = req.body;
             const patterns = [
                 /<cardNo>([^<]+)<\/cardNo>/,
@@ -126,32 +151,17 @@ app.post('/event-qr', async (req, res) => {
                     break;
                 }
             }
-            if (!token) {
-                console.log('⚠️  [QR] XML sin token conocido:', xml);
-            }
-        }
-
-        // ── Parsear JSON normal ───────────────────────────────────────────
-        if (!token && typeof req.body === 'object' && req.body !== null) {
-            token =
-                req.body.authCardNo ||
-                req.body.cardNo ||
-                req.body.cardNoString ||
-                req.body.qrCode ||
-                req.body.qrCodeData ||
-                req.body?.AccessEvent?.employeeNoString ||
-                req.body?.AccessControllerEvent?.QRCode;
+            if (!token) console.log('⚠️  [QR] XML sin token conocido:', xml);
         }
 
         if (!token) {
-            console.log('❌ [QR] Token no encontrado en el evento');
+            console.log('❌ [QR] Token no encontrado. Body:', JSON.stringify(req.body));
             return res.status(200).json({ result: "failed" });
         }
 
         token = String(token).trim();
         console.log(`🔍 [QR] Validando token: ${token}`);
 
-        // ── Buscar en MongoDB ─────────────────────────────────────────────
         const access = await AccessToken.findOne({ token, status: 'approved' });
 
         if (!access) {
