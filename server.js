@@ -100,8 +100,7 @@ app.post('/event-lpr', cameraAuth, async (req, res) => {
 // EVENTO QR HIKVISION
 // Soporta multipart/form-data, XML y JSON
 // ──────────────────────────────────────────────────────────────
-const multer = require('multer');
-const upload = multer();
+
 
 app.post('/event-qr', upload.any(), async (req, res) => {
     try {
