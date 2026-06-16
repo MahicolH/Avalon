@@ -6,61 +6,32 @@ const qrcode = require('qrcode');
 const axios = require('axios');
 const https = require('https');
 
-// ─── Hikvision ISAPI directa ──────────────────────────────────────────────────
-const HIK_IP   = process.env.HIK_IP   || '192.168.1.72';
-const HIK_USER = process.env.HIK_USER || 'admin';
-const HIK_PASS = process.env.HIK_PASS;
-const hikAgent = new https.Agent({ rejectUnauthorized: false });
+// ─── Hikvision Bridge (PC local via ngrok) ────────────────────────────────────
+const HIK_BRIDGE = process.env.HIK_BRIDGE_URL || 'http://localhost:3001';
 
 async function hikCreateUser(token, nombre) {
     try {
-        const now = new Date();
-        const end = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const fmt = d => d.toISOString().slice(0, 19);
-
-        await axios.post(
-            `https://${HIK_IP}/ISAPI/AccessControl/UserInfo/Record`,
-            {
-                UserInfo: {
-                    employeeNo: token,
-                    name: (nombre || 'Visitante').substring(0, 31),
-                    userType: 'visitor',
-                    Valid: { enable: true, beginTime: fmt(now), endTime: fmt(end) },
-                    doorRight: '1',
-                    RightPlan: [{ doorNo: 1, planTemplateNo: '1' }]
-                }
-            },
-            { auth: { username: HIK_USER, password: HIK_PASS }, httpsAgent: hikAgent }
-        );
-
-        await axios.post(
-            `https://${HIK_IP}/ISAPI/AccessControl/CardInfo/Record`,
-            {
-                CardInfo: {
-                    employeeNo: token,
-                    cardNo: token,
-                    cardType: 'normalCard'
-                }
-            },
-            { auth: { username: HIK_USER, password: HIK_PASS }, httpsAgent: hikAgent }
-        );
-
-        console.log(`✅ [Hikvision] Usuario registrado: ${nombre} / token: ${token}`);
+        await axios.post(`${HIK_BRIDGE}/crear-visitante`, {
+            employeeNo: token,
+            nombre: nombre || 'Visitante',
+            horas: 24
+        }, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+        console.log(`✅ [Bridge] Visitante creado: ${token}`);
     } catch (e) {
-        console.error('❌ [Hikvision] Error creando usuario:', e.response?.data || e.message);
+        console.error('❌ [Bridge] Error creando visitante:', e.message);
     }
 }
 
 async function hikDeleteUser(token) {
     try {
-        await axios.put(
-            `https://${HIK_IP}/ISAPI/AccessControl/UserInfo/Delete`,
-            { UserInfoDelCond: { EmployeeNoList: [{ employeeNo: token }] } },
-            { auth: { username: HIK_USER, password: HIK_PASS }, httpsAgent: hikAgent }
-        );
-        console.log(`🗑️ [Hikvision] Usuario eliminado: ${token}`);
+        await axios.delete(`${HIK_BRIDGE}/eliminar-visitante/${token}`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+        console.log(`🗑️ [Bridge] Visitante eliminado: ${token}`);
     } catch (e) {
-        console.error('❌ [Hikvision] Error eliminando usuario:', e.response?.data || e.message);
+        console.error('❌ [Bridge] Error eliminando visitante:', e.message);
     }
 }
 
