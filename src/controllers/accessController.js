@@ -10,6 +10,7 @@ const https = require('https');
 
 // ─── Hikvision Bridge (PC local via ngrok) ────────────────────────────────────
 const HIK_BRIDGE = process.env.HIK_BRIDGE_URL || 'http://localhost:3001';
+console.log('🔥 ENTRANDO A hikCreateUser', token);
 
 async function hikCreateUser(token, nombre) {
     console.log("🚨🚨🚨 ENTRE A hikCreateUser 🚨🚨🚨");
