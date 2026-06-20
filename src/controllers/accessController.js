@@ -32,6 +32,11 @@ async function hikCreateUser(token, nombre) {
             }
         );
 
+        console.log(
+            '📱 QR Hikvision:',
+            qrResult.data?.QRCodeInfo?.QRCodeString
+        );
+
         return qrResult.data.QRCodeInfo.QRCodeString;
 
     } catch (e) {
@@ -39,17 +44,6 @@ async function hikCreateUser(token, nombre) {
         console.error('❌ [Bridge] Error creando visitante:', e.message);
         throw e;
 
-    }
-}
-
-async function hikDeleteUser(token) {
-    try {
-        await axios.delete(`${HIK_BRIDGE}/eliminar-visitante/${token}`, {
-            headers: { 'ngrok-skip-browser-warning': 'true' }
-        });
-        console.log(`🗑️ [Bridge] Visitante eliminado: ${token}`);
-    } catch (e) {
-        console.error('❌ [Bridge] Error eliminando visitante:', e.message);
     }
 }
 
