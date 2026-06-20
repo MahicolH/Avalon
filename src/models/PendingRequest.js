@@ -15,7 +15,7 @@ const PendingRequestSchema = new mongoose.Schema({
     residentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
     }
 
 }, { timestamps: true });
