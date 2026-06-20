@@ -37,6 +37,12 @@ async function hikCreateUser(token, nombre) {
             qrResult.data?.QRCodeInfo?.QRCodeString
         );
 
+        console.log(
+            'QR DEVUELTO POR HIKVISION:',
+            JSON.stringify(qrResult.data, null, 2)
+        );
+
+
         return qrResult.data.QRCodeInfo.QRCodeString;
 
     } catch (e) {
