@@ -159,8 +159,26 @@ exports.generateManual = async (req, res) => {
 
 // ─── Crear solicitud de visita ────────────────────────────────────────────────
 exports.createRequest = async (req, res) => {
-    const nuevo = await PendingRequest.create(req.body);
-    res.json(nuevo);
+    try {
+
+        console.log('📥 Nueva solicitud:', req.body);
+
+        const nuevo = await PendingRequest.create(req.body);
+
+        console.log('✅ Solicitud creada:', nuevo._id);
+
+        return res.json(nuevo);
+
+    } catch (e) {
+
+        console.error('❌ createRequest error:', e);
+
+        return res.status(500).json({
+            success: false,
+            error: e.message
+        });
+
+    }
 };
 
 // ─── Obtener solicitudes pendientes ──────────────────────────────────────────
