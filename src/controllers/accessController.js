@@ -1,3 +1,5 @@
+console.log("🔥 ACCESS CONTROLLER CARGADO");
+
 const AccessToken = require('../models/AccessToken');
 const PendingRequest = require('../models/PendingRequest');
 const GatewayCommand = require('../models/GatewayCommand');
