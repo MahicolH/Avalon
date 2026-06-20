@@ -10,6 +10,7 @@ const https = require('https');
 const HIK_BRIDGE = process.env.HIK_BRIDGE_URL || 'http://localhost:3001';
 
 async function hikCreateUser(token, nombre) {
+    console.log("🚨🚨🚨 ENTRE A hikCreateUser 🚨🚨🚨");
     try {
 
         await axios.post(`${HIK_BRIDGE}/crear-visitante`, {
