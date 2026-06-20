@@ -11,6 +11,7 @@ const HIK_BRIDGE = process.env.HIK_BRIDGE_URL || 'http://localhost:3001';
 
 async function hikCreateUser(token, nombre) {
     try {
+
         await axios.post(`${HIK_BRIDGE}/crear-visitante`, {
             employeeNo: token,
             nombre: nombre || 'Visitante',
@@ -18,9 +19,26 @@ async function hikCreateUser(token, nombre) {
         }, {
             headers: { 'ngrok-skip-browser-warning': 'true' }
         });
+
         console.log(`✅ [Bridge] Visitante creado: ${token}`);
+
+        const qrResult = await axios.post(
+            `${HIK_BRIDGE}/generate-qr`,
+            {
+                employeeNo: token
+            },
+            {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            }
+        );
+
+        return qrResult.data.QRCodeInfo.QRCodeString;
+
     } catch (e) {
+
         console.error('❌ [Bridge] Error creando visitante:', e.message);
+        throw e;
+
     }
 }
 
@@ -115,9 +133,15 @@ exports.generateManual = async (req, res) => {
             phone
         });
 
-        await hikCreateUser(token, visitorName);
+        const hikQRString = await hikCreateUser(
+            token,
+            visitorName
+        );
 
-        const qr = await qrcode.toDataURL(token);
+        const qr = await qrcode.toDataURL(
+            hikQRString
+        );
+
         res.json({
             success: true, token, qrCodeImage: qr,
             visitorName, destination: destination || 'Manual',
@@ -244,9 +268,15 @@ exports.approveRequest = async (req, res) => {
             status: 'approved'
         });
 
-        await hikCreateUser(token, pending.visitorName);
+        const hikQRString = await hikCreateUser(
+            token,
+            pending.visitorName
+        );
 
-        const qr = await qrcode.toDataURL(token);
+        const qr = await qrcode.toDataURL(
+            hikQRString
+        );
+        
         const requestId = pending.requestId;
         await PendingRequest.findByIdAndDelete(req.params.id);
 
