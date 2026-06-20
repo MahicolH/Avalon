@@ -126,6 +126,7 @@ exports.qrEvent = async (req, res) => {
 
 // ─── Generar pase manual ──────────────────────────────────────────────────────
 exports.generateManual = async (req, res) => {
+    console.log("🔥 GENERANDO PASE MANUAL");
     try {
         const { visitorName, destination, hostName, accessType, visitType, phone } = req.body;
         const token = Math.floor(10000000 + Math.random() * 89999999).toString();
