@@ -1,46 +1,18 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
-transporter.verify(function(error, success) {
-
-    if (error) {
-
-        console.error(
-            '❌ SMTP ERROR:',
-            error
-        );
-
-    } else {
-
-        console.log(
-            '✅ SMTP conectado correctamente'
-        );
-
-    }
-
-});
+const resend = new Resend(
+    process.env.RESEND_API_KEY
+);
 
 async function sendRegistrationNotification(user, code) {
 
-    await transporter.sendMail({
+    await resend.emails.send({
 
-        from: process.env.SMTP_USER,
+        from: 'Avalon <onboarding@resend.dev>',
 
         to: process.env.ADMIN_EMAIL,
 
-        subject: 'Nueva solicitud de residente - Avalon',
+        subject: 'Nueva solicitud de residente',
 
         html: `
             <h2>Nueva solicitud de registro</h2>
@@ -53,15 +25,7 @@ async function sendRegistrationNotification(user, code) {
 
             <p><b>Bodega:</b> ${user.bodega}</p>
 
-            <p><b>Teléfono:</b> ${user.telefono || 'No registrado'}</p>
-
-            <hr>
-
-            <h3>Código de activación</h3>
-
-            <h1 style="color:#00594C;">
-                ${code}
-            </h1>
+            <h1>${code}</h1>
         `
     });
 
