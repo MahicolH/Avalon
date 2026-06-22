@@ -209,6 +209,7 @@ exports.register = async (req, res) => {
             error: 'Error al crear la cuenta. Por favor intenta de nuevo.' 
         });
     }
+};
 
     // =====================================
 // OBTENER USUARIOS PENDIENTES
@@ -306,5 +307,4 @@ exports.rejectUser = async (req, res) => {
         });
 
     }
-};
 };
