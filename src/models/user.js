@@ -66,6 +66,10 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    approved: {
+    type: Boolean,
+    default: false
+    },
     accessHistory: [{ 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'AccessToken' 
