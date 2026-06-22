@@ -44,6 +44,11 @@ const UserSchema = new mongoose.Schema({
         enum: ['RESIDENT', 'ADMIN', 'VISITOR', 'SECURITY'], 
         default: 'RESIDENT' 
     },
+    approvalStatus: {
+    type: String,
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    default: 'PENDING'
+    },
     userType: {
         type: String,
         enum: ['resident', 'admin', 'visitor', 'security'],
