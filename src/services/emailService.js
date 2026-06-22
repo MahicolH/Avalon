@@ -13,6 +13,25 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+transporter.verify(function(error, success) {
+
+    if (error) {
+
+        console.error(
+            '❌ SMTP ERROR:',
+            error
+        );
+
+    } else {
+
+        console.log(
+            '✅ SMTP conectado correctamente'
+        );
+
+    }
+
+});
+
 async function sendRegistrationNotification(user, code) {
 
     await transporter.sendMail({
@@ -43,10 +62,6 @@ async function sendRegistrationNotification(user, code) {
             <h1 style="color:#00594C;">
                 ${code}
             </h1>
-
-            <p>
-                Comparta este código únicamente si aprueba la solicitud.
-            </p>
         `
     });
 
