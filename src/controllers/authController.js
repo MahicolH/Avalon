@@ -185,6 +185,25 @@ exports.register = async (req, res) => {
 
         // Guardar en base de datos
         await nuevoUsuario.save();
+        try {
+
+            await sendRegistrationNotification(
+                    nuevoUsuario,
+                    activationCode
+            );
+
+            console.log(
+                '📧 Correo enviado al administrador'
+            );
+
+} catch (mailError) {
+
+    console.error(
+        '❌ Error enviando correo:',
+        mailError
+    );
+
+}
 
         console.log('✅ Usuario creado exitosamente:', username);
 
