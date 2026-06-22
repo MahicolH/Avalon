@@ -47,8 +47,10 @@ exports.login = async (req, res) => {
         }
 
         // Verificar que el usuario esté activo
-        if (!user.isActive) {
-            return res.status(403).json({ error: 'Usuario inactivo' });
+        if (!user.approved) {
+            return res.status(403).json({
+                error: 'Tu solicitud aún no ha sido aprobada por el administrador'
+            });
         }
 
         // Verificar rol si se especifica
@@ -182,7 +184,7 @@ exports.register = async (req, res) => {
 
         res.status(201).json({ 
             success: true,
-            message: 'Usuario registrado exitosamente',
+            message: 'Solicitud enviada. Esperando aprobación del administrador.',
             user: {
                 username,
                 nombre,
@@ -207,4 +209,102 @@ exports.register = async (req, res) => {
             error: 'Error al crear la cuenta. Por favor intenta de nuevo.' 
         });
     }
+
+    // =====================================
+// OBTENER USUARIOS PENDIENTES
+// =====================================
+exports.pendingUsers = async (req, res) => {
+    try {
+
+        const users = await User.find({
+            approved: false
+        }).select('-password');
+
+        res.json({
+            success: true,
+            users
+        });
+
+    } catch (error) {
+
+        console.error('❌ Error obteniendo pendientes:', error);
+
+        res.status(500).json({
+            error: 'Error obteniendo solicitudes'
+        });
+
+    }
+};
+
+// =====================================
+// APROBAR USUARIO
+// =====================================
+exports.approveUser = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+        const user = await User.findByIdAndUpdate(
+            id,
+            {
+                approved: true,
+                isActive: true
+            },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                error: 'Usuario no encontrado'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Usuario aprobado correctamente',
+            user
+        });
+
+    } catch (error) {
+
+        console.error('❌ Error aprobando usuario:', error);
+
+        res.status(500).json({
+            error: 'Error aprobando usuario'
+        });
+
+    }
+};
+
+// =====================================
+// RECHAZAR USUARIO
+// =====================================
+exports.rejectUser = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+        const user = await User.findByIdAndDelete(id);
+
+        if (!user) {
+            return res.status(404).json({
+                error: 'Usuario no encontrado'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Solicitud rechazada'
+        });
+
+    } catch (error) {
+
+        console.error('❌ Error rechazando usuario:', error);
+
+        res.status(500).json({
+            error: 'Error rechazando usuario'
+        });
+
+    }
+};
 };
