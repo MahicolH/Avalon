@@ -215,3 +215,51 @@ exports.register = async (req, res) => {
         });
     }
 };
+exports.activateAccount = async (req, res) => {
+
+    try {
+
+        const { username, code } = req.body;
+
+        if (!username || !code) {
+            return res.status(400).json({
+                error: 'Usuario y código son obligatorios'
+            });
+        }
+
+        const user = await User.findOne({ username });
+
+        if (!user) {
+            return res.status(404).json({
+                error: 'Usuario no encontrado'
+            });
+        }
+
+        if (user.activationCode !== code) {
+            return res.status(400).json({
+                error: 'Código incorrecto'
+            });
+        }
+
+        user.approved = true;
+        user.isActive = true;
+        user.activationCode = null;
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Cuenta activada correctamente'
+        });
+
+    } catch (error) {
+
+        console.error('❌ Error activando cuenta:', error);
+
+        res.status(500).json({
+            error: 'Error activando cuenta'
+        });
+
+    }
+
+};
