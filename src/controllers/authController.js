@@ -47,8 +47,10 @@ exports.login = async (req, res) => {
         }
 
         // Verificar que el usuario esté activo
-        if (!user.isActive) {
-            return res.status(403).json({ error: 'Usuario inactivo' });
+        if (!user.approved) {
+            return res.status(403).json({
+                error: 'Tu cuenta está pendiente de activación'
+            });
         }
 
         // Verificar rol si se especifica
@@ -155,6 +157,9 @@ exports.register = async (req, res) => {
         // Encriptar contraseña
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const activationCode = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
 
         // Crear nuevo usuario
         const nuevoUsuario = new User({
@@ -165,10 +170,16 @@ exports.register = async (req, res) => {
             bodega,
             email,
             telefono,
+
             role: role || 'RESIDENT',
             userType: userType || 'resident',
+
             createdAt: new Date(),
-            isActive: true
+
+            isActive: false,
+            approved: false,
+
+            activationCode
         });
 
         // Guardar en base de datos
@@ -178,7 +189,7 @@ exports.register = async (req, res) => {
 
         res.status(201).json({ 
             success: true,
-            message: 'Usuario registrado exitosamente',
+            message: 'Solicitud enviada. Esperando activación.',
             user: {
                 username,
                 nombre,
