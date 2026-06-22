@@ -165,10 +165,14 @@ exports.register = async (req, res) => {
             bodega,
             email,
             telefono,
-            role: role || 'RESIDENT',
-            userType: userType || 'resident',
+
+            role: 'RESIDENT',
+            userType: 'resident',
+
             createdAt: new Date(),
-            isActive: true
+
+            isActive: false,
+            approved: false
         });
 
         // Guardar en base de datos
