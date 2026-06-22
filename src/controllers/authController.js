@@ -1,6 +1,7 @@
 // src/controllers/authController.js
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { sendRegistrationNotification } = require('../services/emailService');
 const User = require('../models/user');
 
 const USER = process.env.ADMIN_USER || 'admin';
