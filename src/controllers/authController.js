@@ -283,3 +283,63 @@ exports.activateAccount = async (req, res) => {
     }
 
 };
+
+exports.getPendingUsers = async (req, res) => {
+
+    try {
+
+        const users = await User.find({
+            approved: false
+        }).select(
+            'username nombre apellido bodega email activationCode'
+        );
+
+        res.json(users);
+
+    } catch (error) {
+
+        console.error('❌ Error obteniendo usuarios:', error);
+
+        res.status(500).json({
+            error: 'Error obteniendo usuarios'
+        });
+
+    }
+
+};
+
+exports.approveUser = async (req, res) => {
+
+    try {
+
+        const { userId } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                error: 'Usuario no encontrado'
+            });
+        }
+
+        user.approved = true;
+        user.isActive = true;
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Usuario activado correctamente'
+        });
+
+    } catch (error) {
+
+        console.error('❌ Error activando usuario:', error);
+
+        res.status(500).json({
+            error: 'Error activando usuario'
+        });
+
+    }
+
+};
